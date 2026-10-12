@@ -811,12 +811,12 @@ function adopt_soft_properties(element, data) {
 		});
 	}
 	if ((element.type == "character" || (element.type == "npc" && element.stype == "full")) && element.skin && data.skin && element.skin != data.skin && !element.rip) {
-		if (!no_graphics && !XYWH[data.skin]) data.skin = "naked";
+		if (!XYWH[data.skin]) data.skin = "naked";
 		element.skin = data.skin;
 		if (!no_graphics) {
 			new_sprite(element, "full", "renew");
 			restore_dimensions(element);
-		}
+		} else if (!textures[data.skin]) generate_textures(data.skin, "full");
 	}
 	// if(data.cash) {data.shells=data.cash; delete data.shells;}
 	for (prop in data) {

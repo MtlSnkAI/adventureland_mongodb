@@ -186,3 +186,42 @@ test("shield hit reactions are harmless with fake PIXI and expire without removi
 	context.paladin_shield_reaction(sprite, "aether_shield");
 	assert.equal(sprite.filter_shield_hit.color, 0xab91db);
 });
+
+test("a character's new skin gets textures in no-graphics mode", () => {
+	// A character in view changes skin (angelwings, tristone, the wardrobe): adopt_soft_properties takes it in, and the
+	// sprite's next walking frame reads the new skin's textures. Without them set_texture threw inside draw(), which
+	// then never re-armed its setTimeout: a headless client fell back to one frame every 15 s until reloaded.
+	const take = (source, name) => {
+		const start = source.indexOf("function " + name + "(");
+		return source.slice(start, source.indexOf("\nfunction ", start + 1));
+	};
+	const game = fs.readFileSync(gamePath, "utf8"),
+		functions = fs.readFileSync(path.join(repository, "js/functions.js"), "utf8"),
+		common = fs.readFileSync(path.join(repository, "js/old_common_functions.js"), "utf8");
+	const context = {
+		no_graphics: true,
+		textures: {},
+		XYWH: { old_skin: [0, 0, 26, 36], new_skin: [78, 0, 26, 36] },
+		G: { dimensions: {}, monsters: {} },
+		C: {},
+		FC: {},
+		asp_skip: {},
+		current_in: "main",
+		current_map: "main",
+		offset_walking: false,
+	};
+	context.window = context;
+	vm.createContext(context);
+	vm.runInContext(fs.readFileSync(fakePixiPath, "utf8"), context);
+	vm.runInContext(
+		[take(common, "is_array"), take(common, "in_arr"), take(common, "round"), take(functions, "generate_textures"), take(functions, "set_texture"), take(game, "adopt_soft_properties")].join("\n"),
+		context,
+	);
+	const sprite = { type: "character", stype: "full", skin: "old_skin" };
+	context.generate_textures("old_skin", "full"); // (as new_sprite does when the character comes into view)
+	context.set_texture(sprite, 1, 0);
+	context.adopt_soft_properties(sprite, { skin: "new_skin" });
+	assert.equal(sprite.skin, "new_skin");
+	assert.doesNotThrow(() => context.set_texture(sprite, 2, 1)); // its next walking frame
+	assert.ok(sprite.texture);
+});
