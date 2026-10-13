@@ -214,7 +214,7 @@ test("a character's new skin gets textures in no-graphics mode", () => {
 	vm.createContext(context);
 	vm.runInContext(fs.readFileSync(fakePixiPath, "utf8"), context);
 	vm.runInContext(
-		[take(common, "is_array"), take(common, "in_arr"), take(common, "round"), take(functions, "generate_textures"), take(functions, "set_texture"), take(game, "adopt_soft_properties")].join("\n"),
+		[take(common, "is_array"), take(common, "in_arr"), take(common, "round"), take(functions, "generate_textures"), take(functions, "new_sprite"), take(functions, "set_texture"), take(game, "adopt_soft_properties")].join("\n"),
 		context,
 	);
 	const sprite = { type: "character", stype: "full", skin: "old_skin" };
